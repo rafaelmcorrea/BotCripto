@@ -57,3 +57,21 @@ df['sinal'] = df['rsi'].apply(lambda x: verificar_sinal(x) if pd.notna(x) else '
 
 #mostra as últimas linhas com o RSI e o sinal
 print(df[['close', 'rsi', 'sinal']].tail())
+ 
+ # Adiciona médias móveis simples de 9 a 21 períodos
+df['sma_9'] = ta.trend.SMAIndicator(close=df['close'], window=9).sma_indicator()
+df['sma_21'] = ta.trend.SMAIndicator(close=df['close'], window=21).sma_indicator()
+
+# Verificar se houve cruzamento
+def cruzamento_sma(row):
+    if row['sma_9'] > row['sma_21']:
+        return '🟢 SMA9 acima (tendência de alta)'
+    elif row['sma_9'] < row['sma_21']:
+        return '🔻 SMA9 abaixo (tendência de baixa)'
+    else:
+        return '🔘 Cruzadas'
+    
+df['sma_sinal'] = df.apply(cruzamento_sma, axis=1)
+
+# Mostra os dados com RSI e SMA
+print(df[['close', 'rsi', 'sinal', 'sma_9', 'sma_21', 'sma_sinal']].tail())
