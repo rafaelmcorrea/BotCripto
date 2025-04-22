@@ -1,77 +1,32 @@
-from binance.client import Client
 from dotenv import load_dotenv
 import os
+import pandas as pd
+from binance.client import Client
+from bot.indicadores import calcular_rsi, calcular_smas
+from bot.estrategias import usar_rsi, usar_sma
 
-#carrega as variaveis do .env
 load_dotenv()
-api_key = os.getenv("BINANCE_API_KEY")
-api_secret = os.getenv("BINANCE-API_SECRET")
+api_key = os.getenv("API_KEY")
+api_secret = os.getenv("API_SECRET")
 
-#Inicializa o cliente na Binance
 client = Client(api_key, api_secret)
 
-#Obtém os últimos 5 candles de 1 hora
-candles = client.get_klines(symbol='BTCUSDT', interval=Client.KLINE_INTERVAL_1HOUR, limit=5)
+klines = client.get_klines(symbol='BTCUSDT', interval=Client.KLINE_INTERVAL_1HOUR, limit=40)
 
-import pandas as pd
-
-#Converte candles em DataFrame
-df = pd.DataFrame(candles, coluns=['timestamp', 'open', 'high', 'low', 'close', 'volume',
+df = pd.DataFrame(klines, coluns=['timestamp', 'open', 'high', 'low', 'close', 'volume',
     'close_time', 'quote_asset_volume', 'number_of_trades',
     'taker_buy_base_volume', 'taker_buy_quote_volume', 'ignore'])
 
-#converte tipos
-df['timestamp'] = pd.to.datetime(df['timestamp'], unit='ms')
-df['open'] = df['open'].astype(float)
-df['high'] = df['high'].astype(float)
-df['low'] = df['low'].astype(float)
 df['close'] = df['close'].astype(float)
-df['volume'] = df['volume'].astype(float)
 
-#Define o índice como timestamp
-df.set_index('timestamp', inplice=True)
+# Aplica os indicadores
+df = calcular_rsi
+df = calcular_smas
 
-#Mostra o DataFrame
+# Aplica as estrategias
 
-pint(df[['open', 'high', 'low', 'close', 'volume']])
+rsi_signal = usar_rsi(df)
+sma_signal = usar_sma(df)
 
-#mostra abertura e fechamento
-for candle in candles:
-    print(f"Abertura: {candle[1]} | Fechamento: {candle[4]}")
-
-import ta
-
-#calcula RSI
-df['rsi'] = ta.momentum.RSIIndicator(close=df['close'], window=14).rsi()
-
-# Define sinais simples com base no RSI
-def verificar_sinal(rsi):
-    if rsi < 30:
-        return '🔵 Comprar'
-    elif rsi > 70:
-        return '🔴 Vender'
-    else:
-        return '🟡 Aguardar'
-    
-df['sinal'] = df['rsi'].apply(lambda x: verificar_sinal(x) if pd.notna(x) else 'carregando...')
-
-#mostra as últimas linhas com o RSI e o sinal
-print(df[['close', 'rsi', 'sinal']].tail())
- 
- # Adiciona médias móveis simples de 9 a 21 períodos
-df['sma_9'] = ta.trend.SMAIndicator(close=df['close'], window=9).sma_indicator()
-df['sma_21'] = ta.trend.SMAIndicator(close=df['close'], window=21).sma_indicator()
-
-# Verificar se houve cruzamento
-def cruzamento_sma(row):
-    if row['sma_9'] > row['sma_21']:
-        return '🟢 SMA9 acima (tendência de alta)'
-    elif row['sma_9'] < row['sma_21']:
-        return '🔻 SMA9 abaixo (tendência de baixa)'
-    else:
-        return '🔘 Cruzadas'
-    
-df['sma_sinal'] = df.apply(cruzamento_sma, axis=1)
-
-# Mostra os dados com RSI e SMA
-print(df[['close', 'rsi', 'sinal', 'sma_9', 'sma_21', 'sma_sinal']].tail())
+print(f"📊 RSI: {rsi_signal}")
+print(f"📈 SMA: {sma_signal}")
