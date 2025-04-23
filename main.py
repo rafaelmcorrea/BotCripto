@@ -20,13 +20,20 @@ df = pd.DataFrame(klines, coluns=['timestamp', 'open', 'high', 'low', 'close', '
 df['close'] = df['close'].astype(float)
 
 # Aplica os indicadores
-df = calcular_rsi
-df = calcular_smas
+df = calcular_rsi(df)
+df = calcular_smas(df)
+df = calcular_macd(df)
+df = calcular_bollinger(df)
+df = calcular_estocastico(df)
 
 # Aplica as estrategias
 
 rsi_signal = usar_rsi(df)
 sma_signal = usar_sma(df)
 
-print(f"📊 RSI: {rsi_signal}")
-print(f"📈 SMA: {sma_signal}")
+print("📊 Resultados das Estratégias:")
+print(f"RSI:        {usar_rsi(df)}")
+print(f"SMA:        {usar_sma(df)}")
+print(f"MACD:       {usar_macd(df)}")
+print(f"Bollinger:  {usar_bollinger(df)}")
+print(f"Estocástico:{usar_estocastico(df)}")
