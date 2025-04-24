@@ -1,71 +1,59 @@
+# main.py
+import tkinter as tk
+from tkinter import ttk
 from dotenv import load_dotenv
 import os
-import pandas as pd
 from binance.client import Client
-from bot.indicadores import calcular_rsi, calcular_smas
-from bot.estrategias import usar_rsi, usar_sma
+from bot.scanner import escanear_mercado
 
 load_dotenv()
 api_key = os.getenv("API_KEY")
 api_secret = os.getenv("API_SECRET")
-
 client = Client(api_key, api_secret)
 
-klines = client.get_klines(symbol='BTCUSDT', interval=Client.KLINE_INTERVAL_1HOUR, limit=40)
+janela = tk.Tk()
+janela.title("Bot de Cripto")
+janela.geometry("500x650")
 
-df = pd.DataFrame(klines, coluns=['timestamp', 'open', 'high', 'low', 'close', 'volume',
-    'close_time', 'quote_asset_volume', 'number_of_trades',
-    'taker_buy_base_volume', 'taker_buy_quote_volume', 'ignore'])
+# Par e intervalo
+tk.Label(janela, text="Par (ex: BTCUSDT)").pack()
+entrada_simbolo = tk.Entry(janela)
+entrada_simbolo.insert(0, "BTCUSDT")
+entrada_simbolo.pack(pady=5)
 
-df['close'] = df['close'].astype(float)
+tk.Label(janela, text="Intervalo").pack()
+combo_intervalo = ttk.Combobox(janela, values=["1m", "5m", "15m", "1h", "4h", "1d"])
+combo_intervalo.set("1h")
+combo_intervalo.pack(pady=5)
 
-# Aplica os indicadores
-df = calcular_rsi(df)
-df = calcular_smas(df)
-df = calcular_macd(df)
-df = calcular_bollinger(df)
-df = calcular_estocastico(df)
+tk.Label(janela, text="Risco (ex: 1.5 para RR 1:1.5)").pack()
+entrada_risco = tk.Entry(janela)
+entrada_risco.insert(0, "2")
+entrada_risco.pack(pady=5)
 
-# Aplica as estrategias
+tk.Label(janela, text="Consenso mínimo").pack()
+entrada_consenso = tk.Entry(janela)
+entrada_consenso.insert(0, "3")
+entrada_consenso.pack(pady=5)
 
-rsi_signal = usar_rsi(df)
-sma_signal = usar_sma(df)
-
-print("📊 Resultados das Estratégias:")
-print(f"RSI:        {usar_rsi(df)}")
-print(f"SMA:        {usar_sma(df)}")
-print(f"MACD:       {usar_macd(df)}")
-print(f"Bollinger:  {usar_bollinger(df)}")
-print(f"Estocástico:{usar_estocastico(df)}")
-
+# Estratégias
+tk.Label(janela, text="Estratégias:").pack()
 from bot.estrategias import usar_rsi, usar_sma, usar_macd, usar_bollinger, usar_estocastico
+variaveis = {}
+estrategias_disponiveis = ['RSI', 'SMA', 'MACD', 'BOLLINGER', 'ESTOCASTICO']
+for nome in estrategias_disponiveis:
+    var = tk.BooleanVar(value=True)
+    chk = tk.Checkbutton(janela, text=nome, variable=var)
+    chk.pack(anchor='w')
+    variaveis[nome] = var
 
-# Dicionario de Estratégias
-estrategias_disponiveis = {
-    'RSI': usar_rsi,
-    'SMA': usar_sma,
-    'MACD': usar_macd,
-    'BOLLINGER': usar_bollinger,
-    'ESTOCASTICO': usar_estocastico 
-}
+# Resultado
+resultado_text = tk.Text(janela, height=20, wrap=tk.WORD)
+resultado_text.pack(fill='both', expand=True)
 
-print ("\n=== MENU DE ESTRATÉGIAS ===")
-for i, nome in enumerate(estrategias_disponiveis.keys(), 1):
-    print(f"{i}. {nome}")
+# Botão buscar
+btn_buscar = tk.Button(janela, text="Buscar Sinal", bg='green', fg='white', 
+    command=lambda: escanear_mercado(client, combo_intervalo, entrada_risco, entrada_consenso, resultado_text, variaveis))
+btn_buscar.pack(pady=10)
 
-opcoes = input("\nDigite os números das estratégias separadas por vírgula (ex: 1,3,5): ")
-escolhidas = [int(num.strip()) for num in opcoes.split(',')]
-
-resultados = {'COMPRA': 0, 'VENDA': 0, 'NEUTRO': 0}
-
-print("\n📊 Resultados das Estratégias Escolhidas:")
-for i in escolhidas:
-    nome = list(estrategias_disponiveis.key())[i - 1]
-    funcao = estrategias_disponiveis[nome]
-    resultado = funcao(df)
-    resultados[resultado] += 1
-    print(f"{nome}: {resultado}")
-
-print("\n📈 RESUMO:")
-print(f"COMPRA: {resultados['COMPRA']} | VENDA: {resultados['VENDA']} | NEUTRO: {resultados['NEUTRO']}")
-
+janela.mainloop()

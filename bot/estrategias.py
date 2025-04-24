@@ -1,39 +1,45 @@
 def usar_rsi(df):
-    ultima = df.iloc[-1]
-    if ultima['rsi'] < 30:
+    ultimo_rsi = df['rsi'].iloc[-1]
+    if ultimo_rsi < 30:
         return 'COMPRA'
-    elif ultima['rsi'] > 70:
+    elif ultimo_rsi > 70:
         return 'VENDA'
-    return 'NEUTRO'
+    else:
+        return 'NEUTRO'
 
 def usar_sma(df):
-    ultima = df.iloc[-1]
-    if ultima['sma_curta'] > ultima['sma_longa']:
+    if df['sma_curta'].iloc[-1] > df['sma_longa'].iloc[-1]:
         return 'COMPRA'
-    elif ultima['sma_curta'] < ultima['sma_longa']:
+    elif df['sma_curta'].iloc[-1] < df['sma_longa'].iloc[-1]:
         return 'VENDA'
-    return 'NEUTRO'
+    else:
+        return 'NEUTRO'
 
 def usar_macd(df):
-    ultima = df.iloc[-1]
-    if ultima['macd'] > ultima['macd_signal']:
+    if df['macd'].iloc[-1] > df['macd_signal'].iloc[-1]:
         return 'COMPRA'
-    elif ultima['macd'] < ultima['macd_signal']:
+    elif df['macd'].iloc[-1] < df['macd_signal'].iloc[-1]:
         return 'VENDA'
-    return 'NEUTRO'
+    else:
+        return 'NEUTRO'
 
 def usar_bollinger(df):
-    ultima = df.iloc[-1]
-    if ultima['close'] < ultima['bb_lower']:
+    close = df['close'].iloc[-1]
+    upper = df['bb_upper'].iloc[-1]
+    lower = df['bb_lower'].iloc[-1]
+    if close < lower:
         return 'COMPRA'
-    elif ultima['close'] > ultima['bb_upper']:
+    elif close > upper:
         return 'VENDA'
-    return 'NEUTRO'
+    else:
+        return 'NEUTRO'
 
-def usar_bollinger(df):
-    ultima = df.iloc[-1]
-    if ultima['stoch_k'] < 20 and ultima['stoch_d'] < 20:
+def usar_estocastico(df):
+    k = df['stoch_k'].iloc[-1]
+    d = df['stoch_d'].iloc[-1]
+    if k < 20 and k > d:
         return 'COMPRA'
-    elif ultima['stoch_k'] > 80 and ultima['stoch_d'] > 80:
+    elif k > 80 and k < d:
         return 'VENDA'
-    return 'NEUTRO'
+    else:
+        return 'NEUTRO'
